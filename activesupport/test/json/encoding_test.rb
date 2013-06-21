@@ -33,7 +33,6 @@ class TestJSONEncoding < Test::Unit::TestCase
                    [ :this,  %("this") ],
                    [ :"a b", %("a b")  ]]
 
-  ObjectTests   = [[ Foo.new(1, 2), %({\"a\":1,\"b\":2}) ]]
   CustomTests   = [[ Custom.new, '"custom"' ]]
 
   VariableTests = [[ ActiveSupport::JSON::Variable.new('foo'), 'foo'],
@@ -62,6 +61,11 @@ class TestJSONEncoding < Test::Unit::TestCase
         ActiveSupport.use_standard_json_time_format = false
       end
     end
+  end
+
+  def test_object_encoding
+    sorted_json = '{' + ActiveSupport::JSON.encode(Foo.new(1,2))[1..-2].split(',').sort.join(',') + '}'
+    assert_equal %({\"a\":1,\"b\":2}), sorted_json
   end
 
   def test_hash_encoding
