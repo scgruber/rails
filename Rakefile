@@ -109,7 +109,7 @@ namespace :railslts do
     system('cd activeresource && rake test')
 
     puts '', "\033[44m#{'railties'}\033[0m", ''
-    warn 'Skipping railties!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+    system('cd railties && rake test')
 
   end
 
