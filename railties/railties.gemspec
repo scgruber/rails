@@ -19,4 +19,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'actionpack',     '= 2.3.18'
   s.add_dependency 'actionmailer',   '= 2.3.18'
   s.add_dependency 'activeresource', '= 2.3.18'
+  s.add_dependency 'railslts-version', '= 2.3.18.6'
 end
