@@ -9,8 +9,8 @@ require 'rails/plugin/locator'
 require 'rails/plugin/loader'
 require 'rails/gem_dependency'
 require 'rails/rack'
-require 'rails/rails_lts'
-
+require 'railslts'
+require 'railslts-version'
 
 RAILS_ENV = (ENV['RAILS_ENV'] || 'development').dup unless defined?(RAILS_ENV)
 
@@ -643,11 +643,11 @@ Run `rake gems:install` to install the missing gems.
     end
 
     def configure_rails_lts
-      Rails::RailsLts.configuration = Rails::RailsLts::Configuration.new(Rails.configuration.rails_lts_options)
+      RailsLts::Configuration.prepare(Rails.configuration.rails_lts_options)
     end
 
     def finalize_rails_lts
-      Rails::RailsLts.finalize
+      RailsLts::Configuration.finalize
     end
   end
 
