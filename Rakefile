@@ -146,6 +146,7 @@ namespace :railslts do
 
   desc 'Updates the LICENSE file in individual sub-projects'
   task :update_license do
+    require 'date'
     last_change = Date.parse(`git log -1 --format=%cd`)
     PROJECTS.each do |project|
       license_path = "#{project}/LICENSE"
@@ -161,9 +162,11 @@ namespace :railslts do
 
     task :ensure_ready do
       jobs = [
+        'Did you release a new version of https://github.com/makandra/railslts-version ?',
+        'Did you bump the required "railslts-version" dependency in railties.gemspec?',
         'Did you build static gems using `rake railslts:build_gems`?',
         'Did you update the LICENSE files using `rake railslts:update_license`?',
-        'Did you commit and your changes, as well as the changes by the Rake tasks mentioned above?',
+        'Did you commit and push your changes, as well as the changes by the Rake tasks mentioned above?',
       ]
 
       puts
