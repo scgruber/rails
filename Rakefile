@@ -15,7 +15,8 @@ task :default => :test
   desc "Run #{task_name} task for all projects"
   task task_name do
     PROJECTS.each do |project|
-      system %(cd #{project} && #{env} rake _#{RAKEVERSION}_ #{task_name})
+      warn 'When running tests for Rails LTS, prefer running the "railslts:test" task.'
+      system %(cd #{project} && #{env} rake _#{RAKEVERSION}_ #{task_name}) or raise 'failed'
     end
   end
 end
@@ -88,28 +89,28 @@ namespace :railslts do
   task :test do
 
     puts '', "\033[44m#{'activesupport'}\033[0m", ''
-    system('cd activesupport && rake test')
+    system('cd activesupport && rake test') or raise 'failed'
 
     puts '', "\033[44m#{'actionmailer'}\033[0m", ''
-    system('cd actionmailer && rake test')
+    system('cd actionmailer && rake test') or raise 'failed'
 
     puts '', "\033[44m#{'actionpack'}\033[0m", ''
-    system('cd actionpack && rake test')
+    system('cd actionpack && rake test') or raise 'failed'
 
     puts '', "\033[44m#{'activerecord (mysql)'}\033[0m", ''
-    system('cd activerecord && rake test_mysql')
+    system('cd activerecord && rake test_mysql') or raise 'failed'
 
     puts '', "\033[44m#{'activerecord (sqlite3)'}\033[0m", ''
-    system('cd activerecord && rake test_sqlite3')
+    system('cd activerecord && rake test_sqlite3') or raise 'failed'
 
     puts '', "\033[44m#{'activerecord (postgres)'}\033[0m", ''
-    system('cd activerecord && rake test_postgresql')
+    system('cd activerecord && rake test_postgresql') or raise 'failed'
 
     puts '', "\033[44m#{'activeresource'}\033[0m", ''
-    system('cd activeresource && rake test')
+    system('cd activeresource && rake test') or raise 'failed'
 
     puts '', "\033[44m#{'railties'}\033[0m", ''
-    system('cd railties && rake test')
+    system('cd railties && rake test') or raise 'failed'
 
   end
 
