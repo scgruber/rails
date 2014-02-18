@@ -13,4 +13,4 @@ Pull Requests
 Since this is LTS focuses on security only, we won't accept any pull requests.
 
 If you have found a vulnerability that relates to Rails in general, please check http://rubyonrails.org/security. 
-If you found something related to LTS only, you can contact us at railsltsmaintainers@makandra.de.
+If you found something related to LTS only, you can contact us at railslts-maintainers@makandra.de.
