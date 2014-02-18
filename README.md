@@ -1,7 +1,7 @@
 Rails LTS
 =====
 
-Rails LTS a maintained release of Rails 2.3.18 that includes additional security fixes. See [https://railslts.com/](https://railslots.com) for more information.
+Rails LTS a maintained release of Rails 2.3.18 that includes additional security fixes. See [https://railslts.com/](https://railslts.com) for more information.
 
 This is the public repository for the "Community Edition". It receives security patches with a 10 day delay.
 
