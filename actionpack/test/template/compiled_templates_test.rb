@@ -141,7 +141,7 @@ class CompiledTemplatesTest < Test::Unit::TestCase
     end
 
     def reset_mtime_of(template_name, view_paths_to_use)
-      view_paths_to_use.find_template(template_name).previously_last_modified = 10.seconds.ago unless ActionView::Base.cache_template_loading?
+      view_paths_to_use.find_template(template_name).previously_last_modified = 1.minute.ago unless ActionView::Base.cache_template_loading?
     end
 
     def modify_template(template, content, view_paths_to_use = ActionController::Base.view_paths)
