@@ -153,7 +153,7 @@ namespace :railslts do
       puts "Updating license #{license_path}..."
       File.exists?(license_path) or raise "Could not find license: #{license_path}"
       license = File.read(license_path)
-      license.sub!(/ before(.*?)\./ , " before #{last_change.strftime("%B %d, %Y")}.") or raise "Couldn't find timestamp."
+      license.sub!(/ before(.*?)\./ , " before #{(last_change + 10).strftime("%B %d, %Y")}.") or raise "Couldn't find timestamp."
       File.open(license_path, "w") { |w| w.write(license) }
     end
   end
