@@ -167,6 +167,7 @@ namespace :railslts do
         'Did you update the LICENSE files using `rake railslts:update_license`?',
         'Did you build static gems using `rake railslts:build_gems`?',
         'Did you commit and push your changes, as well as the changes by the Rake tasks mentioned above?',
+        'Are you sure the 3-0-lts branch is either unchanged or ready to release as well?',
       ]
 
       puts
