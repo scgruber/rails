@@ -1,7 +1,6 @@
 #!/bin/sh
 
 echo "Installing Rails LTS gems..."
-gem install --no-ri --no-rdoc railslts-version && \
 gem install --no-ri --no-rdoc pkg/activesupport*.gem  && \
 gem install --no-ri --no-rdoc pkg/activerecord*.gem   && \
 gem install --no-ri --no-rdoc pkg/actionpack*.gem     && \
