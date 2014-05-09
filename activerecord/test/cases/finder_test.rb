@@ -12,6 +12,8 @@ require 'models/project'
 require 'models/customer'
 require 'models/job'
 require 'models/categorization'
+require 'models/credential'
+
 
 class DynamicFinderMatchTest < ActiveRecord::TestCase
   def test_find_no_match
@@ -64,8 +66,186 @@ class DynamicFinderMatchTest < ActiveRecord::TestCase
   end
 end
 
+
+module FinderConditionTests
+  def test_find_on_blank_bind_conditions
+    [ [""], ["",{}] ].each do |blank|
+      assert_nothing_raised { Topic.find(:first, :conditions => blank) }
+    end
+  end
+
+  def test_find_on_array_conditions
+    assert Topic.find(1, :conditions => ["approved = ?", false])
+    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => ["approved = ?", true]) }
+  end
+
+  def test_find_on_hash_conditions
+    assert Topic.find(1, :conditions => { :approved => false })
+    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :approved => true }) }
+  end
+
+  def test_find_on_hash_conditions_with_explicit_table_name
+    assert Topic.find(1, :conditions => { 'topics.approved' => false })
+    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { 'topics.approved' => true }) }
+  end
+
+  def test_find_on_hash_conditions_with_hashed_table_name
+    assert Topic.find(1, :conditions => {:topics => { :approved => false }})
+    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => {:topics => { :approved => true }}) }
+  end
+
+  def test_find_with_hash_conditions_on_joined_table
+    firms = Firm.all :joins => :account, :conditions => {:accounts => { :credit_limit => 50 }}
+    assert_equal 1, firms.size
+    assert_equal companies(:first_firm), firms.first
+  end
+
+  def test_find_with_hash_conditions_on_joined_table_and_with_range
+    firms = DependentFirm.all :joins => :account, :conditions => {:name => 'RailsCore', :accounts => { :credit_limit => 55..60 }}
+    assert_equal 1, firms.size
+    assert_equal companies(:rails_core), firms.first
+  end
+
+  def test_find_on_hash_conditions_with_explicit_table_name_and_aggregate
+    david = customers(:david)
+    assert Customer.find(david.id, :conditions => { 'customers.name' => david.name, :address => david.address })
+    assert_raise(ActiveRecord::RecordNotFound) {
+      Customer.find(david.id, :conditions => { 'customers.name' => david.name + "1", :address => david.address })
+    }
+  end
+
+  def test_find_on_association_proxy_conditions
+    assert_equal [1, 2, 3, 5, 6, 7, 8, 9, 10], Comment.find_all_by_post_id(authors(:david).posts).map(&:id).sort
+  end
+
+  def test_find_on_hash_conditions_with_range
+    assert_equal [1,2], Topic.find(:all, :conditions => { :id => 1..2 }).map(&:id).sort
+    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :id => 2..3 }) }
+  end
+
+  def test_find_on_hash_conditions_with_end_exclusive_range
+    assert_equal [1,2,3], Topic.find(:all, :conditions => { :id => 1..3 }).map(&:id).sort
+    assert_equal [1,2], Topic.find(:all, :conditions => { :id => 1...3 }).map(&:id).sort
+    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(3, :conditions => { :id => 2...3 }) }
+  end
+
+  def test_find_on_hash_conditions_with_multiple_ranges
+    assert_equal [1,2,3], Comment.find(:all, :conditions => { :id => 1..3, :post_id => 1..2 }).map(&:id).sort
+    assert_equal [1], Comment.find(:all, :conditions => { :id => 1..1, :post_id => 1..10 }).map(&:id).sort
+  end
+
+  def test_find_on_multiple_hash_conditions
+    assert Topic.find(1, :conditions => { :author_name => "David", :title => "The First Topic", :replies_count => 1, :approved => false })
+    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :author_name => "David", :title => "The First Topic", :replies_count => 1, :approved => true }) }
+    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :author_name => "David", :title => "HHC", :replies_count => 1, :approved => false }) }
+    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :author_name => "David", :title => "The First Topic", :replies_count => 1, :approved => true }) }
+  end
+
+  def test_condition_interpolation
+    assert_kind_of Firm, Company.find(:first, :conditions => ["name = '%s'", "37signals"])
+    assert_nil Company.find(:first, :conditions => ["name = '%s'", "37signals!"])
+    assert_nil Company.find(:first, :conditions => ["name = '%s'", "37signals!' OR 1=1"])
+    assert_kind_of Time, Topic.find(:first, :conditions => ["id = %d", 1]).written_on
+  end
+
+  def test_condition_array_interpolation
+    assert_kind_of Firm, Company.find(:first, :conditions => ["name = '%s'", "37signals"])
+    assert_nil Company.find(:first, :conditions => ["name = '%s'", "37signals!"])
+    assert_nil Company.find(:first, :conditions => ["name = '%s'", "37signals!' OR 1=1"])
+    assert_kind_of Time, Topic.find(:first, :conditions => ["id = %d", 1]).written_on
+  end
+
+  def test_condition_hash_interpolation
+    assert_kind_of Firm, Company.find(:first, :conditions => { :name => "37signals"})
+    assert_nil Company.find(:first, :conditions => { :name => "37signals!"})
+    assert_kind_of Time, Topic.find(:first, :conditions => {:id => 1}).written_on
+  end
+
+  def test_hash_condition_find_malformed
+    assert_raise(ActiveRecord::StatementInvalid) {
+      Company.find(:first, :conditions => { :id => 2, :dhh => true })
+    }
+  end
+
+  def test_hash_condition_find_with_improper_nested_hashes
+    assert_raise(ActiveRecord::StatementInvalid) {
+      Company.find(:first, :conditions => { :name => { :companies => { :id  => 1 }}})
+    }
+  end
+
+  def test_hash_condition_find_with_dot_in_nested_column_name
+    assert_raise(ActiveRecord::StatementInvalid) {
+      Company.find(:first, :conditions => { :name => { "companies.id" => 1 }})
+    }
+  end
+
+  def test_hash_condition_find_with_dot_in_column_name_okay
+    assert Company.find(:first, :conditions => { "companies.id" => 1 })
+  end
+
+  def test_hash_condition_find_with_escaped_characters
+    Company.create("name" => "Ain't noth'n like' \#stuff")
+    assert Company.find(:first, :conditions => { :name => "Ain't noth'n like' \#stuff" })
+  end
+
+  def test_hash_condition_find_with_array
+    p1, p2 = Post.find(:all, :limit => 2, :order => 'id asc')
+    assert_equal [p1, p2], Post.find(:all, :conditions => { :id => [p1, p2] }, :order => 'id asc')
+    assert_equal [p1, p2], Post.find(:all, :conditions => { :id => [p1, p2.id] }, :order => 'id asc')
+  end
+
+  def test_hash_condition_find_with_nil
+    topic = Topic.find(:first, :conditions => { :last_read => nil } )
+    assert_not_nil topic
+    assert_nil topic.last_read
+  end
+
+  def test_hash_condition_find_with_aggregate_having_one_mapping
+    balance = customers(:david).balance
+    assert_kind_of Money, balance
+    found_customer = Customer.find(:first, :conditions => {:balance => balance})
+    assert_equal customers(:david), found_customer
+  end
+
+  def test_hash_condition_find_with_aggregate_attribute_having_same_name_as_field_and_key_value_being_aggregate
+    gps_location = customers(:david).gps_location
+    assert_kind_of GpsLocation, gps_location
+    found_customer = Customer.find(:first, :conditions => {:gps_location => gps_location})
+    assert_equal customers(:david), found_customer
+  end
+
+  def test_hash_condition_find_with_aggregate_having_one_mapping_and_key_value_being_attribute_value
+    balance = customers(:david).balance
+    assert_kind_of Money, balance
+    found_customer = Customer.find(:first, :conditions => {:balance => balance.amount})
+    assert_equal customers(:david), found_customer
+  end
+
+  def test_hash_condition_find_with_aggregate_attribute_having_same_name_as_field_and_key_value_being_attribute_value
+    gps_location = customers(:david).gps_location
+    assert_kind_of GpsLocation, gps_location
+    found_customer = Customer.find(:first, :conditions => {:gps_location => gps_location.gps_location})
+    assert_equal customers(:david), found_customer
+  end
+
+  def test_hash_condition_find_with_aggregate_having_three_mappings
+    address = customers(:david).address
+    assert_kind_of Address, address
+    found_customer = Customer.find(:first, :conditions => {:address => address})
+    assert_equal customers(:david), found_customer
+  end
+
+  def test_hash_condition_find_with_one_condition_being_aggregate_and_another_not
+    address = customers(:david).address
+    assert_kind_of Address, address
+    found_customer = Customer.find(:first, :conditions => {:address => address, :name => customers(:david).name})
+    assert_equal customers(:david), found_customer
+  end
+end
+
+
 class FinderTest < ActiveRecord::TestCase
-  fixtures :companies, :topics, :entrants, :developers, :developers_projects, :posts, :comments, :accounts, :authors, :customers
+  fixtures :companies, :topics, :entrants, :developers, :developers_projects, :posts, :comments, :accounts, :authors, :customers, :credentials, :credential_usages
 
   def test_find_by_id_with_hash
     assert_raises(ActiveRecord::StatementInvalid) do
@@ -305,184 +485,14 @@ class FinderTest < ActiveRecord::TestCase
     assert topic.respond_to?("author_name")
   end
 
-  def test_find_on_blank_conditions
-    [nil, " ", [], {}].each do |blank|
-      assert_nothing_raised { Topic.find(:first, :conditions => blank) }
-    end
+  include FinderConditionTests
+
+  def test_find_on_hash_conditions_with_ambiguous_hashed_table_name
+    assert_equal [credentials(:first_credential)], Credential.scoped(:conditions => { :credentials => { :active => true } }).to_a
   end
 
-  def test_find_on_blank_bind_conditions
-    [ [""], ["",{}] ].each do |blank|
-      assert_nothing_raised { Topic.find(:first, :conditions => blank) }
-    end
-  end
-
-  def test_find_on_array_conditions
-    assert Topic.find(1, :conditions => ["approved = ?", false])
-    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => ["approved = ?", true]) }
-  end
-
-  def test_find_on_hash_conditions
-    assert Topic.find(1, :conditions => { :approved => false })
-    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :approved => true }) }
-  end
-
-  def test_find_on_hash_conditions_with_explicit_table_name
-    assert Topic.find(1, :conditions => { 'topics.approved' => false })
-    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { 'topics.approved' => true }) }
-  end
-
-  def test_find_on_hash_conditions_with_hashed_table_name
-    assert Topic.find(1, :conditions => {:topics => { :approved => false }})
-    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => {:topics => { :approved => true }}) }
-  end
-
-  def test_find_with_hash_conditions_on_joined_table
-    firms = Firm.all :joins => :account, :conditions => {:accounts => { :credit_limit => 50 }}
-    assert_equal 1, firms.size
-    assert_equal companies(:first_firm), firms.first
-  end
-
-  def test_find_with_hash_conditions_on_joined_table_and_with_range
-    firms = DependentFirm.all :joins => :account, :conditions => {:name => 'RailsCore', :accounts => { :credit_limit => 55..60 }}
-    assert_equal 1, firms.size
-    assert_equal companies(:rails_core), firms.first
-  end
-
-  def test_find_on_hash_conditions_with_explicit_table_name_and_aggregate
-    david = customers(:david)
-    assert Customer.find(david.id, :conditions => { 'customers.name' => david.name, :address => david.address })
-    assert_raise(ActiveRecord::RecordNotFound) {
-      Customer.find(david.id, :conditions => { 'customers.name' => david.name + "1", :address => david.address })
-    }
-  end
-
-  def test_find_on_association_proxy_conditions
-    assert_equal [1, 2, 3, 5, 6, 7, 8, 9, 10], Comment.find_all_by_post_id(authors(:david).posts).map(&:id).sort
-  end
-
-  def test_find_on_hash_conditions_with_range
-    assert_equal [1,2], Topic.find(:all, :conditions => { :id => 1..2 }).map(&:id).sort
-    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :id => 2..3 }) }
-  end
-
-  def test_find_on_hash_conditions_with_end_exclusive_range
-    assert_equal [1,2,3], Topic.find(:all, :conditions => { :id => 1..3 }).map(&:id).sort
-    assert_equal [1,2], Topic.find(:all, :conditions => { :id => 1...3 }).map(&:id).sort
-    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(3, :conditions => { :id => 2...3 }) }
-  end
-
-  def test_find_on_hash_conditions_with_multiple_ranges
-    assert_equal [1,2,3], Comment.find(:all, :conditions => { :id => 1..3, :post_id => 1..2 }).map(&:id).sort
-    assert_equal [1], Comment.find(:all, :conditions => { :id => 1..1, :post_id => 1..10 }).map(&:id).sort
-  end
-
-  def test_find_on_multiple_hash_conditions
-    assert Topic.find(1, :conditions => { :author_name => "David", :title => "The First Topic", :replies_count => 1, :approved => false })
-    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :author_name => "David", :title => "The First Topic", :replies_count => 1, :approved => true }) }
-    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :author_name => "David", :title => "HHC", :replies_count => 1, :approved => false }) }
-    assert_raise(ActiveRecord::RecordNotFound) { Topic.find(1, :conditions => { :author_name => "David", :title => "The First Topic", :replies_count => 1, :approved => true }) }
-  end
-
-  def test_condition_interpolation
-    assert_kind_of Firm, Company.find(:first, :conditions => ["name = '%s'", "37signals"])
-    assert_nil Company.find(:first, :conditions => ["name = '%s'", "37signals!"])
-    assert_nil Company.find(:first, :conditions => ["name = '%s'", "37signals!' OR 1=1"])
-    assert_kind_of Time, Topic.find(:first, :conditions => ["id = %d", 1]).written_on
-  end
-
-  def test_condition_array_interpolation
-    assert_kind_of Firm, Company.find(:first, :conditions => ["name = '%s'", "37signals"])
-    assert_nil Company.find(:first, :conditions => ["name = '%s'", "37signals!"])
-    assert_nil Company.find(:first, :conditions => ["name = '%s'", "37signals!' OR 1=1"])
-    assert_kind_of Time, Topic.find(:first, :conditions => ["id = %d", 1]).written_on
-  end
-
-  def test_condition_hash_interpolation
-    assert_kind_of Firm, Company.find(:first, :conditions => { :name => "37signals"})
-    assert_nil Company.find(:first, :conditions => { :name => "37signals!"})
-    assert_kind_of Time, Topic.find(:first, :conditions => {:id => 1}).written_on
-  end
-
-  def test_hash_condition_find_malformed
-    assert_raise(ActiveRecord::StatementInvalid) {
-      Company.find(:first, :conditions => { :id => 2, :dhh => true })
-    }
-  end
-
-  def test_hash_condition_find_with_improper_nested_hashes
-    assert_raise(ActiveRecord::StatementInvalid) {
-      Company.find(:first, :conditions => { :name => { :companies => { :id  => 1 }}})
-    }
-  end
-
-  def test_hash_condition_find_with_dot_in_nested_column_name
-    assert_raise(ActiveRecord::StatementInvalid) {
-      Company.find(:first, :conditions => { :name => { "companies.id" => 1 }})
-    }
-  end
-
-  def test_hash_condition_find_with_dot_in_column_name_okay
-    assert Company.find(:first, :conditions => { "companies.id" => 1 })
-  end
-
-  def test_hash_condition_find_with_escaped_characters
-    Company.create("name" => "Ain't noth'n like' \#stuff")
-    assert Company.find(:first, :conditions => { :name => "Ain't noth'n like' \#stuff" })
-  end
-
-  def test_hash_condition_find_with_array
-    p1, p2 = Post.find(:all, :limit => 2, :order => 'id asc')
-    assert_equal [p1, p2], Post.find(:all, :conditions => { :id => [p1, p2] }, :order => 'id asc')
-    assert_equal [p1, p2], Post.find(:all, :conditions => { :id => [p1, p2.id] }, :order => 'id asc')
-  end
-
-  def test_hash_condition_find_with_nil
-    topic = Topic.find(:first, :conditions => { :last_read => nil } )
-    assert_not_nil topic
-    assert_nil topic.last_read
-  end
-
-  def test_hash_condition_find_with_aggregate_having_one_mapping
-    balance = customers(:david).balance
-    assert_kind_of Money, balance
-    found_customer = Customer.find(:first, :conditions => {:balance => balance})
-    assert_equal customers(:david), found_customer
-  end
-
-  def test_hash_condition_find_with_aggregate_attribute_having_same_name_as_field_and_key_value_being_aggregate
-    gps_location = customers(:david).gps_location
-    assert_kind_of GpsLocation, gps_location
-    found_customer = Customer.find(:first, :conditions => {:gps_location => gps_location})
-    assert_equal customers(:david), found_customer
-  end
-
-  def test_hash_condition_find_with_aggregate_having_one_mapping_and_key_value_being_attribute_value
-    balance = customers(:david).balance
-    assert_kind_of Money, balance
-    found_customer = Customer.find(:first, :conditions => {:balance => balance.amount})
-    assert_equal customers(:david), found_customer
-  end
-
-  def test_hash_condition_find_with_aggregate_attribute_having_same_name_as_field_and_key_value_being_attribute_value
-    gps_location = customers(:david).gps_location
-    assert_kind_of GpsLocation, gps_location
-    found_customer = Customer.find(:first, :conditions => {:gps_location => gps_location.gps_location})
-    assert_equal customers(:david), found_customer
-  end
-
-  def test_hash_condition_find_with_aggregate_having_three_mappings
-    address = customers(:david).address
-    assert_kind_of Address, address
-    found_customer = Customer.find(:first, :conditions => {:address => address})
-    assert_equal customers(:david), found_customer
-  end
-
-  def test_hash_condition_find_with_one_condition_being_aggregate_and_another_not
-    address = customers(:david).address
-    assert_kind_of Address, address
-    found_customer = Customer.find(:first, :conditions => {:address => address, :name => customers(:david).name})
-    assert_equal customers(:david), found_customer
+  def test_find_with_hash_conditions_on_ambiguous_joined_table
+    assert_equal [credentials(:first_credential)], Credential.scoped(:joins => :credential_usages, :conditions => { :credential_usages => { :count => 1 } }).to_a
   end
 
   def test_bind_variables
@@ -1130,4 +1140,45 @@ class FinderTest < ActiveRecord::TestCase
         ActiveRecord::Base.send(:replace_bind_variables, statement, vars)
       end
     end
+end
+
+
+class FinderTestWithStrictUnambiguousTableNames < ActiveRecord::TestCase
+  fixtures :companies, :topics, :entrants, :developers, :developers_projects, :posts, :comments, :accounts, :authors, :customers, :categories, :categorizations, :credentials, :credential_usages
+
+  class Configuration
+    def strict_unambiguous_table_names
+      true
+    end
+  end
+
+  def setup
+    @old_configuration = RailsLts.configuration
+    RailsLts.configuration = Configuration.new
+  end
+
+  def teardown
+    RailsLts.configuration = @old_configuration
+  end
+
+  include FinderConditionTests
+
+  def test_find_on_hash_conditions_with_ambiguous_hashed_table_name
+    assert_raise(ActiveRecord::StatementInvalid, "`credentials` is a column name and used as a table name") { assert_equal [credentials(:first_credential)], Credential.scoped(:conditions => { :credentials => { :active => true } }).to_a }
+  end
+
+  def test_find_with_hash_conditions_on_ambiguous_joined_table
+    assert_raise(ActiveRecord::StatementInvalid, "`credential_usages` is a column name and used as a table name") { assert_equal [credentials(:first_credential)], Credential.scoped(:joins => :credential_usages, :conditions => { :credential_usages => { :count => 1 } }).to_a }
+  end
+
+  def test_find_on_hash_conditions_with_ambiguous_hashed_column_name
+    assert_equal [credentials(:first_credential)], Credential.scoped(:conditions => { :credentials => "password" }).to_a
+  end
+
+  def test_find_with_hash_conditions_on_unambiguous_joined_table
+    join_sql = 'INNER JOIN credential_usages AS uses ON uses.credential_id = credentials.id'
+    assert_equal [credentials(:first_credential)], Credential.scoped(:joins => join_sql, :conditions => { :uses => { :count => 1 } }).to_a
+    assert_equal [credentials(:second_credential)], Credential.scoped(:joins => join_sql, :conditions => { :credential_usages => "none" }).to_a
+  end
+
 end

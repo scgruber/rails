@@ -132,6 +132,17 @@ ActiveRecord::Schema.define do
     t.integer :company_id
   end
 
+  create_table :credentials, :force => true do |t|
+    t.string :credentials
+    t.string :credential_usages
+    t.boolean :active
+  end
+
+  create_table :credential_usages, :force => true do |t|
+    t.integer :count
+    t.references :credential
+  end
+
   create_table :customers, :force => true do |t|
     t.string  :name
     t.integer :balance, :default => 0

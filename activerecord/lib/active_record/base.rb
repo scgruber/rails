@@ -1,6 +1,7 @@
 require 'yaml'
 require 'set'
 require 'active_support/core_ext/class/attribute'
+require 'railslts'
 
 module ActiveRecord #:nodoc:
   # Generic Active Record exception class.
@@ -2358,6 +2359,11 @@ module ActiveRecord #:nodoc:
 
               attribute_condition("#{attr_table_name}.#{connection.quote_column_name(attr)}", value)
             elsif top_level
+              if RailsLts.configuration && RailsLts.configuration.strict_unambiguous_table_names
+                if columns_hash.has_key?(attr.to_s)
+                  raise StatementInvalid.new("`#{attr}` is a column name and used as a table name")
+                end
+              end
               sanitize_sql_hash_for_conditions(value, connection.quote_table_name(attr.to_s), false)
             else
               raise ActiveRecord::StatementInvalid

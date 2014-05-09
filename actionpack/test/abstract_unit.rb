@@ -2,6 +2,7 @@ $:.unshift File.expand_path('../../lib', __FILE__)
 $:.unshift File.expand_path('../../../activesupport/lib', __FILE__)
 $:.unshift File.expand_path('../fixtures/helpers', __FILE__)
 $:.unshift File.expand_path('../fixtures/alternate_helpers', __FILE__)
+$:.unshift File.expand_path('../../../railties/lib', __FILE__)
 
 require 'rubygems'
 require 'yaml'

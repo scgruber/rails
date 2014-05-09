@@ -10,6 +10,8 @@ module RailsLts
 
     attr_accessor :escape_html_entities_in_json
 
+    attr_accessor :strict_unambiguous_table_names
+
     def self.prepare(rails_lts_options)
       RailsLts.configuration = new(rails_lts_options)
     end
@@ -48,10 +50,12 @@ module RailsLts
         self.disable_json_parsing = true
         self.disable_xml_parsing = true
         self.escape_html_entities_in_json = true
+        self.strict_unambiguous_table_names = true
       when :compatible
         self.disable_json_parsing = false
         self.disable_xml_parsing = false
         self.escape_html_entities_in_json = false
+        self.strict_unambiguous_table_names = false
       end
     end
 
