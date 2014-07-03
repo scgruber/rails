@@ -162,12 +162,13 @@ namespace :railslts do
 
     task :ensure_ready do
       jobs = [
+        'Are you aware that you need to perform the following tasks on EVERY Rails LTS branch that was changed?',
         'Did you release a new version of https://github.com/makandra/railslts-version ?',
         'Did you bump the required "railslts-version" dependency in railties.gemspec?',
         'Did you update the LICENSE files using `rake railslts:update_license`?',
         'Did you build static gems using `rake railslts:build_gems`?',
         'Did you commit and push your changes, as well as the changes by the Rake tasks mentioned above?',
-        'Are you sure the 3-0-lts branch is either unchanged or ready to release as well?',
+        'We will now publish the latest versions (both 2.3 and 3.0) to gems.makandra.de. Ready?',
       ]
 
       puts
