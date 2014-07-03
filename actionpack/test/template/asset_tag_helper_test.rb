@@ -34,6 +34,11 @@ class AssetTagHelperTest < ActionView::TestCase
       )
     end
 
+    Dir["#{ActionView::Helpers::AssetTagHelper::STYLESHEETS_DIR}/*.css"].each_with_index do |path, i|
+      mtime = Time.parse('2013-05-01 13:37:00') + i
+      File.utime(mtime, mtime, path)
+    end
+
     @controller = BasicController.new
 
     @request = Class.new do
