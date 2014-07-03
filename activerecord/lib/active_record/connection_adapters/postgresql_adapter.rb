@@ -352,9 +352,9 @@ module ActiveRecord
           "'#{value.to_s}'"
         elsif value.kind_of?(String) && column && column.sql_type =~ /^bit/
           case value
-            when /^[01]*$/
+            when /\A[01]*\z$/
               "B'#{value}'" # Bit-string notation
-            when /^[0-9A-F]*$/i
+            when /\A[0-9A-F]*\z$/i
               "X'#{value}'" # Hexadecimal notation
           end
         else
