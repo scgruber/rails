@@ -23,5 +23,5 @@ Gem::Specification.new do |s|
   s.add_dependency('rdoc',          '~> 3.4')
   s.add_dependency('activesupport', version)
   s.add_dependency('actionpack',    version)
-  s.add_dependency('railslts-version', '= 3.0.20.3')
+  s.add_dependency('railslts-version', '= 3.0.20.4')
 end
