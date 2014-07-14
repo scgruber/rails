@@ -162,12 +162,28 @@ namespace :railslts do
     end
 
     desc "Publish new Rails LTS community release on github.com/makandra/rails"
-    task :community => :ensure_ready do
+    task :community do
       existing_remotes = `git remote`
       unless existing_remotes.include?('community')
         system('git remote add community git@github.com:makandra/rails.git') or raise "Couldn't add remote'"
       end
-      system('git fetch community && git push community 3-0-lts') or raise 'Error while publishing'
+      system('git fetch community') or raise 'Could not fetch from remote'
+
+      puts "We will now publish the following changes to GitHub:"
+      puts
+      system('git log --oneline community/3-0-lts..HEAD') or raise 'Error showing log'
+      puts
+
+      puts "Do you want to proceed? [y/n]"
+      answer = STDIN.gets
+      puts
+      unless answer.strip == 'y'
+        $stderr.puts "Aborting. Nothing was released."
+        puts
+        exit
+      end
+
+      system('git push community 3-0-lts') or raise 'Error while publishing'
       puts "Deployment done."
       puts "Check https://github.com/makandra/rails/tree/3-0-lts"
     end
