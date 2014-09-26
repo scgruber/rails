@@ -188,7 +188,7 @@ namespace :railslts do
 
     desc "Publish new Rails LTS customer release on gems.makandra.de/railslts"
     task :customer => :ensure_ready do
-      for hostname in %w[c23 c42]
+      for hostname in %w[c23 c42 c32 c24]
         fqdn = "#{hostname}.gems.makandra.de"
         puts "\033[1mUpdating #{fqdn}...\033[0m"
         command = '/opt/update_railslts.sh'
