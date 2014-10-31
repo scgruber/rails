@@ -48,7 +48,7 @@ class FileUpdateCheckerTest < Test::Unit::TestCase
     i = 0
     checker = ActiveSupport::FileUpdateChecker.new(FILES){ i += 1 }
     checker.execute_if_updated
-    sleep(1)
+    sleep(5)
     FileUtils.touch(FILES)
     checker.execute_if_updated
     assert_equal 2, i
