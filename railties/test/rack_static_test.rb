@@ -5,12 +5,18 @@ require 'rails/rack'
 require 'fileutils'
 
 class RackStaticTest < ActiveSupport::TestCase
+
   def setup
+    @non_public_path = "#{RAILS_ROOT}/non_public_file.html"
     FileUtils.cp_r "#{RAILS_ROOT}/fixtures/public", "#{RAILS_ROOT}/public"
+    File.open(@non_public_path, 'w') do |file|
+      file.puts "non public content"
+    end
   end
 
   def teardown
     FileUtils.rm_rf "#{RAILS_ROOT}/public"
+    FileUtils.rm(@non_public_path)
   end
 
   DummyApp = lambda { |env|
@@ -38,6 +44,12 @@ class RackStaticTest < ActiveSupport::TestCase
     assert_equal "/foo/index.html", get("/foo/index.html")
     assert_equal "/foo/index.html", get("/foo/")
     assert_equal "/foo/index.html", get("/foo")
+  end
+
+  test "does not betray the existance of files outside root" do
+    path = "../non_public_file.html"
+    assert File.exist?(File.join(RAILS_ROOT, 'public', path))
+    assert_equal get("/nofile"), get(path)
   end
 
   private
