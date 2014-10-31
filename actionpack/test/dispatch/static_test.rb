@@ -28,6 +28,12 @@ class StaticTest < ActiveSupport::TestCase
     assert_equal "/foo/index.html", get("/foo")
   end
 
+  test "does not betray the existance of files outside root" do
+    path = "../non_public_file.html"
+    assert File.exist?(File.join(FIXTURE_LOAD_PATH, 'public', path))
+    assert_equal get("/nofile"), get(path)
+  end
+
   private
     def get(path)
       Rack::MockRequest.new(App).request("GET", path).body
