@@ -34,6 +34,28 @@ class StaticTest < ActiveSupport::TestCase
     assert_equal get("/nofile"), get(path)
   end
 
+  test "does not betray the existance of unreadable files" do
+    begin
+      filename = 'unreadable.html.erb'
+      target = File.join(FIXTURE_LOAD_PATH, 'public', filename)
+      FileUtils.touch target
+      File.expects(:readable?).with(target).returns(false).at_least_once
+      assert File.exist? target
+      assert !File.readable?(target)
+      path = "/#{filename}"
+      assert_equal get("/nofile"), get(path)
+    ensure
+      File.unlink target
+    end
+  end
+
+  test "does not betray the existance of files outside root when using alternate path separators" do
+    filename = 'non_public_file.html'
+    assert File.exist?(File.join(FIXTURE_LOAD_PATH, filename))
+    path = "/%5C..%2F#{filename}"
+    assert_equal get("/nofile"), get(path)
+  end
+
   private
     def get(path)
       Rack::MockRequest.new(App).request("GET", path).body
