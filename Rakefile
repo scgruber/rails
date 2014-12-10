@@ -121,44 +121,9 @@ namespace :railslts do
 
   namespace :release do
 
-    task :ensure_ready do
-      jobs = [
-        'Are you aware that you need to perform the following tasks on EVERY Rails LTS branch that was changed?',
-        'Did you release a new version of https://github.com/makandra/railslts-version ?',
-        'Did you bump the required "railslts-version" dependency in railties.gemspec?',
-        'Did you update the LICENSE files using `rake railslts:update_license`?',
-        'Did you build static gems using `rake railslts:build_gems`?',
-        'Did you commit and push your changes, as well as the changes by the Rake tasks mentioned above?',
-        'We will now publish the latest versions (both 2.3 and 3.0) to gems.makandra.de. Ready?',
-      ]
-
-      puts
-
-      jobs.each do |job|
-        print "#{job} [y/n] "
-        answer = STDIN.gets
-        puts
-        unless answer.strip == 'y'
-          $stderr.puts "Aborting. Nothing was released."
-          puts
-          exit
-        end
-      end
-    end
-
-
     desc "Publish new Rails LTS customer release on gems.makandra.de/railslts"
-    task :customer => :ensure_ready do
-      for hostname in %w[c23 c42]
-        fqdn = "#{hostname}.gems.makandra.de"
-        puts "\033[1mUpdating #{fqdn}...\033[0m"
-        command = '/opt/update_railslts.sh'
-        system "ssh deploy-gems_p@#{fqdn} '#{command}'" or fail
-        puts "done."
-      end
-
-      puts "Deployment done."
-      puts "Check https://gem.makandra.de/railtslts"
+    task :customer do
+      fail "This rake task is only available on the 2-3-lts branch. NOTHING WAS RELEASED."
     end
 
     desc "Publish new Rails LTS community release on github.com/makandra/rails"
