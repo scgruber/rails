@@ -192,12 +192,13 @@ namespace :railslts do
         fqdn = "#{hostname}.gems.makandra.de"
         puts "\033[1mUpdating #{fqdn}...\033[0m"
         command = '/opt/update_railslts.sh'
-        system "ssh deploy-gems_p@#{fqdn} '#{command}'"
+        system "ssh deploy-gems_p@#{fqdn} '#{command}'" or raise 'Deployment failed'
         puts "done."
       end
 
-      puts "Deployment done."
-      puts "Check https://gem.makandra.de/railtslts"
+      puts 'Deployment done.'
+      puts "Now do a 'git clone https://gems.makandra.de/railslts lts-test-checkout',"
+      puts 'switch to the right branch(es) (e.g. 3-0-lts) and make sure your commits are present.'
     end
 
     desc "Publish new Rails LTS community release on github.com/makandra/rails"
