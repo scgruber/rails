@@ -165,10 +165,11 @@ namespace :railslts do
         'Are you aware that you need to perform the following tasks on EVERY Rails LTS branch that was changed?',
         'Did you release a new version of https://github.com/makandra/railslts-version ?',
         'Did you bump the required "railslts-version" dependency in railties.gemspec?',
-        'Did you update the LICENSE files using `rake railslts:update_license`?',
-        'Did you build static gems using `rake railslts:build_gems`?',
+        'Did you update the LICENSE files using `rake railslts:update_license` (only for 2.3 and 3.0)??',
+        'Did you build static gems using `rake railslts:build_gems` (only for 2.3 and 3.0)?',
         'Did you commit and push your changes, as well as the changes by the Rake tasks mentioned above?',
-        'We will now publish the latest versions (both 2.3 and 3.0) to gems.makandra.de. Ready?',
+        'Did you activate key forwarding for *.gems.makandra.de?',
+        'We will now publish the latest versions (2.3, 3.0 and 3.2) to gems.makandra.de. Ready?',
       ]
 
       puts
