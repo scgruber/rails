@@ -8,6 +8,9 @@ module ActiveSupport
     extend self
 
     attr_reader :backend
+    attr_accessor :depth
+    self.depth = 100
+
     delegate :parse, :to => :backend
 
     def backend=(name)
