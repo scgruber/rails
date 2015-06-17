@@ -89,28 +89,28 @@ namespace :railslts do
   task :test do
 
     puts '', "\033[44m#{'activesupport'}\033[0m", ''
-    system('cd activesupport && rake test') or raise 'failed'
+    system('cd activesupport && rake test')
 
     puts '', "\033[44m#{'actionmailer'}\033[0m", ''
-    system('cd actionmailer && rake test') or raise 'failed'
+    system('cd actionmailer && rake test')
 
     puts '', "\033[44m#{'actionpack'}\033[0m", ''
-    system('cd actionpack && rake test') or raise 'failed'
+    system('cd actionpack && rake test')
 
     puts '', "\033[44m#{'activerecord (mysql)'}\033[0m", ''
-    system('cd activerecord && rake test_mysql') or raise 'failed'
+    system('cd activerecord && rake test_mysql')
 
     puts '', "\033[44m#{'activerecord (sqlite3)'}\033[0m", ''
-    system('cd activerecord && rake test_sqlite3') or raise 'failed'
+    system('cd activerecord && rake test_sqlite3')
 
     puts '', "\033[44m#{'activerecord (postgres)'}\033[0m", ''
-    system('cd activerecord && rake test_postgresql') or raise 'failed'
+    system('cd activerecord && rake test_postgresql')
 
     puts '', "\033[44m#{'activeresource'}\033[0m", ''
-    system('cd activeresource && rake test') or raise 'failed'
+    system('cd activeresource && rake test')
 
     puts '', "\033[44m#{'railties'}\033[0m", ''
-    system('cd railties && rake test') or raise 'failed'
+    system('cd railties && rake test')
 
   end
 
