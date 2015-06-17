@@ -183,7 +183,7 @@ if RUBY_PLATFORM =~ /java/
       excessive_depth.times do
         attack_xml << '</element>'
       end
-      assert_raise 'Document too deep!' do
+      assert_raise RuntimeError do
         XmlMini.parse(attack_xml)
       end
     end
