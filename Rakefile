@@ -123,6 +123,21 @@ namespace :railslts do
     end
   end
 
+  desc 'Move *.gem packages from sub-projects to dist/pkg for easier archiving'
+  task :consolidate_gems do
+    PROJECTS.each do |project|
+      pkg_folder = "#{project}/pkg"
+      puts "Rename and move .gem from #{pkg_folder}..."
+      gem_paths = Dir.glob("#{pkg_folder}/*.gem")
+      gem_paths.size == 1 or raise "Only expected a single .gem file but got #{gem_paths.inspect}"
+      source_path = gem_paths.first
+      consolidated_pkg_folder = 'dist/railslts/pkg'
+      FileUtils.mkdir_p(consolidated_pkg_folder)
+      target_path = "#{consolidated_pkg_folder}/#{project}.gem"
+      FileUtils.mv(source_path, target_path)
+    end
+  end
+
   task :clean_building_artifacts do
     PROJECTS.each do |project|
       pkg_folder = "#{project}/pkg"
@@ -140,7 +155,7 @@ namespace :railslts do
   end
 
   desc 'Builds *.gem packages for static distribution without Git'
-  task :build_gems => [:clean_gems, :package, :clean_building_artifacts, :zip_gems] do
+  task :build_gems => [:clean_gems, :package, :consolidate_gems, :clean_building_artifacts, :zip_gems] do
     puts "Done."
   end
 
