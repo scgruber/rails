@@ -801,23 +801,48 @@ class FormOptionsHelperTest < ActionView::TestCase
     )
   end
 
-  def test_select_escapes_options
+  def test_select_escapes_options_with_xss_enabled
+    @post = Post.new
     assert_dom_equal(
       '<select id="post_title" name="post[title]">&lt;script&gt;alert(1)&lt;/script&gt;</select>',
       select_with_rails_xss('post', 'title', '<script>alert(1)</script>')
     )
+    assert_dom_equal(
+      '<select id="post_title" name="post[title]"><script>alert(1)</script></select>',
+      select_without_rails_xss('post', 'title', '<script>alert(1)</script>')
+    )
   end
 
-  def test_select_escapes_prompt
+  def test_select_escapes_prompt_with_xss_enabled
+    @post = Post.new
     assert_dom_equal(
       '<select name="post[title]" id="post_title"><option value="">&lt;script&gt;prompt&lt;/script&gt;</option></select>',
       select_with_rails_xss('post', 'title', '', :prompt => '<script>prompt</script>')
     )
+    assert_dom_equal(
+      '<select name="post[title]" id="post_title"><option value=""><script>prompt</script></option></select>',
+      select_without_rails_xss('post', 'title', '', :prompt => '<script>prompt</script>')
+    )
   end
 
-  def test_select_include_blank
+  def test_select_escapes_include_blank_with_xss_enabled
+    @post = Post.new
     assert_dom_equal(
       '<select name="post[title]" id="post_title"><option value="">&lt;script&gt;include_blank&lt;/script&gt;</option></select>',
+      select_with_rails_xss('post', 'title', '', :include_blank => '<script>include_blank</script>')
+    )
+
+    assert_dom_equal(
+      '<select name="post[title]" id="post_title"><option value=""><script>include_blank</script></option></select>',
+      select_without_rails_xss('post', 'title', '', :include_blank => '<script>include_blank</script>')
+    )
+  end
+
+  def test_select_does_not_wrap_option_in_error_proc
+    @post = Post.new
+    @post.stubs(:errors).returns(stub('errors', :on => ['an error']))
+    assert_dom_equal(
+      '<div class="fieldWithErrors"><select name="post[title]" id="post_title"><option value="">&lt;script&gt;include_blank&lt;/script&gt;</option></select></div>',
       select_with_rails_xss('post', 'title', '', :include_blank => '<script>include_blank</script>')
     )
   end
@@ -832,5 +857,9 @@ class FormOptionsHelperTest < ActionView::TestCase
 
     def select_with_rails_xss(object, method, choices, options = {}, html_options = {})
       RailsXssEmulation::InstanceTagWithRailsXss.new(object, method, self, options.delete(:object)).to_select_tag(choices, options, html_options)
+    end
+
+    def select_without_rails_xss(object, method, choices, options = {}, html_options = {})
+      ActionView::Helpers::InstanceTag.new(object, method, self, options.delete(:object)).to_select_tag(choices, options, html_options)
     end
 end

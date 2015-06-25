@@ -568,11 +568,11 @@ module ActionView
       private
         def add_options(option_tags, options, value = nil)
           if options[:include_blank]
-            option_tags = content_tag('option', options[:include_blank].kind_of?(String) ? options[:include_blank] : nil, :value => '') + "\n" + option_tags
+            option_tags = content_tag_string('option', options[:include_blank].kind_of?(String) ? options[:include_blank] : nil, :value => '') + "\n".html_safe + option_tags
           end
           if value.blank? && options[:prompt]
             prompt = options[:prompt].kind_of?(String) ? options[:prompt] : I18n.translate('support.select.prompt', :default => 'Please select')
-            option_tags = content_tag('option', prompt, :value => '') + "\n" + option_tags
+            option_tags = content_tag_string('option', prompt, :value => '') + "\n".html_safe + option_tags
           end
           option_tags
         end
