@@ -69,8 +69,8 @@ module ActionView
         query << '{' << ext.map {|e| e && ".#{e}" }.join(',') << ',}'
       end
 
-      query.gsub!(/\{\.html,/, "{.html,.text.html,")
-      query.gsub!(/\{\.text,/, "{.text,.text.plain,")
+      query.gsub!(/(\{|,)\.html,/, "\\1.html,.text.html,")
+      query.gsub!(/(\{|,)\.text,/, "\\1.text,.text.plain,")
 
       templates = []
       sanitizer = Hash.new { |h,k| h[k] = Dir["#{File.dirname(k)}/*"] }
